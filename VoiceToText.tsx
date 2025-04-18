@@ -20,12 +20,11 @@ const requestMicrophonePermission = async () => {
 };
 
 type VoiceToTextProps = {
-  onVoiceToText: () => string;
+  onVoiceToText: (text: string) => void;
 };
 
 const VoiceToText = ({onVoiceToText}: VoiceToTextProps) => {
   const [isRecognizing, setIsRecognizing] = useState(false);
-  const [recognizedText, setRecognizedText] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -38,12 +37,13 @@ const VoiceToText = ({onVoiceToText}: VoiceToTextProps) => {
     };
 
     Voice.onSpeechResults = e => {
-      //setRecognizedText(e.value[0]); // Tomamos el primer resultado
       onVoiceToText(e.value[0]);
+      setIsRecognizing(false);
     };
 
     Voice.onSpeechError = e => {
       setError(e.error);
+      setIsRecognizing(false);
     };
 
     // Limpieza cuando el componente se desmonte
@@ -77,9 +77,6 @@ const VoiceToText = ({onVoiceToText}: VoiceToTextProps) => {
 
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Voz a texto:</Text>
-      <Text>{recognizedText}</Text>
-      {error ? <Text style={{color: 'red'}}>{error}</Text> : null}
       <Button
         title={isRecognizing ? 'Detener' : 'Iniciar'}
         onPress={isRecognizing ? stopRecognizing : startRecognizing}

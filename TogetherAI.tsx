@@ -19,6 +19,12 @@ export default function TogetherAI({textToProccess}: TogetherAIProps) {
     setLoading(true);
 
     try {
+      const content = 'Crea un json del tipo {categoria,detalle,monto, operacion}. ' +
+      'Las categorias pueden ser: Gastos restaurantes, gastos alimentación, gastos golosinas, gastos bebidas. ' +
+      'Los tipos de operación pueden ser suma o resta. Si no estás seguro de los datos del json, mándalos como null. ' +
+      'Si hay un valor del tipo 20 con 50, con significa separador de decimales' +
+      `El texto que quiero que proceses es: ${textToProccess}`;
+      console.log("content to send", content);
       const res = await fetch('https://api.together.xyz/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -31,34 +37,30 @@ export default function TogetherAI({textToProccess}: TogetherAIProps) {
           messages: [
             {
               role: 'user',
-              content:
-                'Crea un json del tipo {categoria,detalle,monto, operacion}. ' +
-                'Las categorias pueden ser: Gastos restaurantes, gastos alimentación, gastos golosinas, gastos bebidas. ' +
-                'Los tipos de operación pueden ser suma o resta. Si no estás seguro de los datos del json, mándalos como null. ' +
-                `El texto que quiero que proceses es: ${textToProccess}`,
+              content,
             },
           ],
         }),
       });
 
       const data = await res.json();
-      let content = data?.choices?.[0]?.message?.content || 'No response';
+      let contentResponse = data?.choices?.[0]?.message?.content || 'No response';
 
-      const match = content.match(/```json([\s\S]*?)```/);
+      const match = contentResponse.match(/```json([\s\S]*?)```/);
       if (match) {
         const jsonText = match[1].trim();
         try {
           const obj = JSON.parse(jsonText);
           console.log('✅ JSON extraído:', obj);
-          content = JSON.stringify(obj, null, 2);
+          contentResponse = JSON.stringify(obj, null, 2);
         } catch (e) {
           console.error('❌ Error al parsear el JSON:', e.message);
         }
       } else {
-        console.warn('⚠️ No se encontró JSON en el texto.');
+        console.warn('⚠️ No se encontró JSON en el texto.',contentResponse);
       }
 
-      setResponse(content);
+      setResponse(contentResponse);
     } catch (error) {
       console.error('Error:', error);
       setResponse('Hubo un error al conectar con Together AI.');
