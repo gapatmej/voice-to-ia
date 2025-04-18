@@ -5,9 +5,11 @@
  * @format
  */
 
-import React from 'react';
+import React, {useState} from 'react';
 import type {PropsWithChildren} from 'react';
 import {
+  ActivityIndicator,
+  Button,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -23,6 +25,8 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import VoiceToText from './VoiceToText';
+import TogetherAI from './TogetherAI';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -57,6 +61,8 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
+  const [textToProccess, setTextToProccess] = useState('');
+
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
@@ -78,10 +84,9 @@ function App(): React.JSX.Element {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <ScrollView
-        style={backgroundStyle}>
+      <ScrollView style={backgroundStyle}>
         <View style={{paddingRight: safePadding}}>
-          <Header/>
+          <Header />
         </View>
         <View
           style={{
@@ -100,10 +105,12 @@ function App(): React.JSX.Element {
             <DebugInstructions />
           </Section>
           <Section title="Learn More">
-            Read the docs to discover what to do next:
+            Read the docas to discover what to do next:
           </Section>
           <LearnMoreLinks />
         </View>
+        <TogetherAI textToProccess={textToProccess} />
+        <VoiceToText onVoiceToText={setTextToProccess} />
       </ScrollView>
     </View>
   );
@@ -125,6 +132,24 @@ const styles = StyleSheet.create({
   },
   highlight: {
     fontWeight: '700',
+  },
+  container: {
+    flex: 1,
+    padding: 16,
+    paddingTop: 50,
+    backgroundColor: '#fff',
+  },
+  responseBox: {
+    marginTop: 20,
+    padding: 12,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    maxHeight: 300,
+  },
+  responseText: {
+    fontSize: 16,
+    color: '#333',
   },
 });
 
