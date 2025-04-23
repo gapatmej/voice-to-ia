@@ -8,8 +8,6 @@
 import React, {useState} from 'react';
 import type {PropsWithChildren} from 'react';
 import {
-  ActivityIndicator,
-  Button,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -27,6 +25,7 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 import VoiceToText from './VoiceToText';
 import TogetherAI from './TogetherAI';
+import SQLLite from './SQLLite';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -111,6 +110,7 @@ function App(): React.JSX.Element {
         </View>
         <TogetherAI textToProccess={textToProccess} />
         <VoiceToText onVoiceToText={setTextToProccess} />
+        <SQLLite/>
       </ScrollView>
     </View>
   );
