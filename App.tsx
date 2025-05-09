@@ -8,7 +8,14 @@
 import React from 'react';
 import {View, Text, ActivityIndicator} from 'react-native';
 import ExpensesScreen from './modules/configurations/expenses/ExpenseScreen';
-import { DatabaseProvider, useDatabase } from './databaseUtil/DatabaseContext';
+import {DatabaseProvider, useDatabase} from './databaseUtil/DatabaseContext';
+import {NavigationContainer} from '@react-navigation/native';
+import {createDrawerNavigator} from '@react-navigation/drawer';
+import HomeScreen from './modules/main/HomeScreen';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+
+const Drawer = createDrawerNavigator();
+
 
 function AppContent() {
   const {isDBReady} = useDatabase();
@@ -22,13 +29,22 @@ function AppContent() {
     );
   }
 
-  return <ExpensesScreen />;
+  return (
+    <NavigationContainer>
+      <Drawer.Navigator initialRouteName="Home">
+        <Drawer.Screen name="Home" component={HomeScreen} />
+        <Drawer.Screen name="Tipos de Gastos" component={ExpensesScreen} />
+      </Drawer.Navigator>
+    </NavigationContainer>
+  );
 }
 
 function App(): React.JSX.Element {
   return (
     <DatabaseProvider>
-      <AppContent />
+      <SafeAreaProvider>
+        <AppContent />
+      </SafeAreaProvider>
     </DatabaseProvider>
   );
 }
