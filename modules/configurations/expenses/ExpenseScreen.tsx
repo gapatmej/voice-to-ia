@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
-  StyleSheet,
 } from 'react-native';
 import {
   addExpense,
@@ -15,6 +14,8 @@ import {
   updateExpense,
   deleteExpense,
 } from './expensesDatabase';
+import {commonStyles} from '../../../styles/commonStyles';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function ExpenseScreen() {
   const [expenses, setExpenses] = useState([]);
@@ -25,6 +26,10 @@ export default function ExpenseScreen() {
     const data = await getExpenses();
     setExpenses(data);
   };
+
+  useEffect(() => {
+    loadExpenses();
+  }, []);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -72,34 +77,34 @@ export default function ExpenseScreen() {
   };
 
   const renderItem = ({item}) => (
-    <View style={styles.itemContainer}>
-      <Text style={styles.itemText}>{item.name}</Text>
-      <View style={styles.buttons}>
+    <View style={commonStyles.itemContainer}>
+      <Text style={commonStyles.itemText}>{item.name}</Text>
+      <View style={commonStyles.buttons}>
         <TouchableOpacity
           onPress={() => handleEdit(item)}
-          style={styles.editButton}>
-          <Text style={styles.buttonText}>Editar</Text>
+          style={commonStyles.editButton}>
+          <Icon name="edit" size={20} color="#fff" />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => handleDelete(item.id)}
-          style={styles.deleteButton}>
-          <Text style={styles.buttonText}>Eliminar</Text>
+          style={commonStyles.deleteButton}>
+          <Icon name="delete" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Gastos</Text>
+    <View style={commonStyles.container}>
+      <Text style={commonStyles.title}>Gastos</Text>
 
-      <View style={styles.inputContainer}>
+      <View style={commonStyles.inputContainer}>
         <TextInput
           placeholder="Nombre del gasto"
           value={name}
           onChangeText={setName}
-          style={styles.input}
-          placeholderTextColor='black'
+          style={commonStyles.input}
+          placeholderTextColor="black"
         />
         <Button
           title={editingId ? 'Actualizar' : 'Agregar'}
@@ -112,72 +117,9 @@ export default function ExpenseScreen() {
         keyExtractor={item => item.id.toString()}
         renderItem={renderItem}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No hay gastos registrados.</Text>
+          <Text style={commonStyles.emptyText}>No hay gastos registrados.</Text>
         }
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#F8D7DA',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: 'black', // Color global para todo el texto
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#aaa',
-    padding: 10,
-    marginRight: 10,
-    borderRadius: 5,
-    color: 'black', // Color global para todo el texto
-  },
-  itemContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  itemText: {
-    fontSize: 18,
-    color: 'black', // Color global para todo el texto
-  },
-  buttons: {
-    flexDirection: 'row',
-  },
-  editButton: {
-    marginRight: 10,
-    backgroundColor: '#4CAF50',
-    padding: 5,
-    borderRadius: 5,
-  },
-  deleteButton: {
-    backgroundColor: '#f44336',
-    padding: 5,
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#999',
-    marginTop: 20,
-    fontSize: 16,
-  },
-});

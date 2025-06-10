@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import SQLite from 'react-native-sqlite-storage';
 import { TABLE_EXPENSES } from '../modules/configurations/expenses/expensesDatabase';
+import { TABLE_EXPENSES_DETAIL } from '../modules/main/ExpenseDetailReport/expenseDetailDatabase';
 
 SQLite.enablePromise(true);
 
@@ -22,6 +23,7 @@ export async function initDB() {
   }
 
   await createExpenses();
+  await createExpensesDetail();
 
   console.log("Base de datos inicializada correctamente");
 }
@@ -36,14 +38,51 @@ async function createExpenses(){
     await db.transaction(tx => {
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS ${TABLE_EXPENSES} (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT UNIQUE NOT NULL
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+              date TEXT NOT NULL, -- formato sugerido: 'YYYY-MM-DD'
+              description TEXT NOT NULL,
+              expense_type TEXT NOT NULL,
+              total REAL NOT NULL
         );`
       );
     });
     console.log("Tabla 'Expenses' creada correctamente.");
   } else {
     console.log("La tabla 'Expenses' ya existe.");
+  }
+}
+
+async function createExpensesDetail(){
+  // Verificar si la tabla existe antes de crearla
+  const result = await db.executeSql(`SELECT name FROM sqlite_master WHERE type='table' AND name='${TABLE_EXPENSES_DETAIL}';`);
+
+
+ /* await db.transaction(tx => {
+      tx.executeSql(
+        'DROP TABLE IF EXISTS TABLE_EXPENSES_DETAIL;',
+        [],
+        () => console.log('Tabla eliminada'),
+        (tx, error) => console.error('Error al eliminar la tabla', error)
+      );
+    });*/
+
+
+  // Si no existe la tabla, entonces creamos la tabla
+  if (result[0].rows.length === 0) {
+    await db.transaction(tx => {
+      tx.executeSql(
+        `CREATE TABLE IF NOT EXISTS ${TABLE_EXPENSES_DETAIL} (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+              date TEXT NOT NULL, -- formato sugerido: 'YYYY-MM-DD'
+              description TEXT NOT NULL,
+              expense_type TEXT NOT NULL,
+              total REAL NOT NULL
+        );`
+      );
+    });
+    console.log("Tabla 'Expenses Detail' creada correctamente.");
+  } else {
+    console.log("La tabla 'Expenses Detail' ya existe.");
   }
 }
 
