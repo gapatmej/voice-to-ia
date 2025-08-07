@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {View, Text, Button, PermissionsAndroid, Platform} from 'react-native';
+import {View, Button, PermissionsAndroid, Platform} from 'react-native';
 import Voice from '@react-native-voice/voice';
 
 const requestMicrophonePermission = async () => {
@@ -78,7 +78,7 @@ const VoiceToText = ({onVoiceToText}: VoiceToTextProps) => {
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
       <Button
-        title={isRecognizing ? 'Detener' : 'Iniciar'}
+        title={isRecognizing ? 'Detener' : 'Agregar gasto'}
         onPress={isRecognizing ? stopRecognizing : startRecognizing}
       />
     </View>

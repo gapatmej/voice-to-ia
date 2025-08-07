@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import SQLite from 'react-native-sqlite-storage';
-import { TABLE_EXPENSES } from '../modules/configurations/expenses/expensesDatabase';
-import { TABLE_EXPENSES_DETAIL } from '../modules/main/ExpenseDetailReport/expenseDetailDatabase';
+import { TABLE_EXPENSES } from '../src/configurations/expenses/expensesDatabase';
+import { TABLE_EXPENSES_DETAIL } from '../src/main/ExpenseDetailReport/expenseDetailDatabase';
 
 SQLite.enablePromise(true);
 

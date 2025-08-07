@@ -7,13 +7,13 @@
 
 import React from 'react';
 import {View, Text, ActivityIndicator} from 'react-native';
-import ExpensesScreen from './modules/configurations/expenses/ExpenseScreen';
+import ExpensesScreen from './src/configurations/expenses/ExpenseScreen';
 import {DatabaseProvider, useDatabase} from './databaseUtil/DatabaseContext';
 import {NavigationContainer} from '@react-navigation/native';
 import {createDrawerNavigator} from '@react-navigation/drawer';
-import HomeScreen from './modules/main/HomeScreen';
+import HomeScreen from './src/main/HomeScreen';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import ExpenseDetailReportScreen from './modules/main/ExpenseDetailReport/ExpenseDetailReportScreen';
+import ExpenseDetailReportScreen from './src/main/ExpenseDetailReport/ExpenseDetailReportScreen';
 
 const Drawer = createDrawerNavigator();
 

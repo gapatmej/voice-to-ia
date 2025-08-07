@@ -17,27 +17,27 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons'; // o FontAwesome, Ionicons, etc.
 
 import {commonStyles} from '../../../styles/commonStyles';
-import { ScrollView } from 'react-native-gesture-handler';
+import {ScrollView} from 'react-native-gesture-handler';
+import {formatDate} from '../../utils/utils';
 
 export default function ExpenseDetailReportScreen() {
   const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState('');
   const [description, setDescription] = useState('');
   const [expenseType, setExpenseType] = useState('');
   const [total, setTotal] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [filterStartDate, setFilterStartDate] = useState(null);
-  const [filterEndDate, setFilterEndDate] = useState(null);
-  const [expenses, setExpenses] = useState([]);
-
-  const formatDate = date => (date ? date.toISOString().split('T')[0] : null);
+  const [filterStartDate, setFilterStartDate] = useState(new Date());
+  const [filterEndDate, setFilterEndDate] = useState(new Date());
+  const [expenses, setExpenses] = useState<any[]>([]);
 
   useEffect(() => {
     loadExpenses();
   }, []);
 
   const loadExpenses = async () => {
-    const data = await getExpensesDetail();
+    console.log("aa",filterStartDate, filterEndDate);
+    const data = await getExpensesDetail(filterStartDate, filterEndDate);
     setExpenses(data);
   };
 
@@ -79,15 +79,8 @@ export default function ExpenseDetailReportScreen() {
   };
 
   const handleFilter = async () => {
-    const all = await getExpensesDetail();
-    const filtered = all.filter(item => {
-      const itemDate = new Date(item.date);
-      return (
-        (!filterStartDate || itemDate >= filterStartDate) &&
-        (!filterEndDate || itemDate <= filterEndDate)
-      );
-    });
-    setExpenses(filtered);
+    const all = await getExpensesDetail(filterStartDate, filterEndDate);
+    setExpenses(all);
   };
 
   const resetForm = () => {
@@ -98,25 +91,42 @@ export default function ExpenseDetailReportScreen() {
     setEditingId(null);
   };
 
+  let dateDatePicker = date;
+  if (showDatePicker === 'start') {
+    dateDatePicker = filterStartDate;
+  } else if (showDatePicker === 'end') {
+    dateDatePicker = filterEndDate;
+  }
+
   return (
-<ScrollView contentContainerStyle={commonStyles.scrollContainer}>
+    <ScrollView contentContainerStyle={commonStyles.scrollContainer}>
       {/* Form Area */}
-      <Text style={commonStyles.title}>Gestor de Gastos</Text>
+      <Text style={commonStyles.title}>Gestor de Gastos3</Text>
 
       <Text style={commonStyles.itemText}>Fecha:</Text>
       <TouchableOpacity
         style={commonStyles.input}
-        onPress={() => setShowDatePicker(true)}>
+        onPress={() => setShowDatePicker('date')}>
         <Text style={commonStyles.dateText}>{formatDate(date)}</Text>
       </TouchableOpacity>
       {showDatePicker && (
         <DateTimePicker
-          value={date}
+          value={dateDatePicker}
           mode="date"
           display="default"
           onChange={(_, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setDate(selectedDate);
+            if (selectedDate) {
+              if (showDatePicker === 'date') {
+                setDate(selectedDate);
+              }
+              if (showDatePicker === 'start') {
+                setFilterStartDate(selectedDate);
+              }
+              if (showDatePicker === 'end') {
+                setFilterEndDate(selectedDate);
+              }
+            }
+            setShowDatePicker('');
           }}
         />
       )}
@@ -158,21 +168,11 @@ export default function ExpenseDetailReportScreen() {
       <View style={commonStyles.dateRow}>
         <Button
           title={filterStartDate ? formatDate(filterStartDate) : 'Inicio'}
-          onPress={() =>
-            setShowDatePicker({
-              mode: 'start',
-              visible: true,
-            })
-          }
+          onPress={() => setShowDatePicker('start')}
         />
         <Button
           title={filterEndDate ? formatDate(filterEndDate) : 'Fin'}
-          onPress={() =>
-            setShowDatePicker({
-              mode: 'end',
-              visible: true,
-            })
-          }
+          onPress={() => setShowDatePicker('end')}
         />
       </View>
 
@@ -193,11 +193,7 @@ export default function ExpenseDetailReportScreen() {
           Fecha
         </Text>
         <Text
-          style={[
-            commonStyles.tableCell,
-            commonStyles.headerCell,
-            {flex: 2},
-          ]}>
+          style={[commonStyles.tableCell, commonStyles.headerCell, {flex: 2}]}>
           Descripción
         </Text>
         <Text
@@ -209,11 +205,7 @@ export default function ExpenseDetailReportScreen() {
           Tipo
         </Text>
         <Text
-          style={[
-            commonStyles.tableCell,
-            commonStyles.headerCell,
-            {flex: 1},
-          ]}>
+          style={[commonStyles.tableCell, commonStyles.headerCell, {flex: 1}]}>
           Total
         </Text>
         <Text
@@ -258,7 +250,7 @@ export default function ExpenseDetailReportScreen() {
                 <TouchableOpacity
                   style={commonStyles.editButton}
                   onPress={() => handleEdit(item)}>
-                  <Icon name="edit"  size={20} color="#fff" />
+                  <Icon name="edit" size={20} color="#fff" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
