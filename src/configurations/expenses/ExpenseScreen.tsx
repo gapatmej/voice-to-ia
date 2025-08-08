@@ -7,6 +7,9 @@ import {
   FlatList,
   TouchableOpacity,
   Alert,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import {
   addExpense,
@@ -76,50 +79,55 @@ export default function ExpenseScreen() {
     ]);
   };
 
-  const renderItem = ({item}) => (
-    <View style={commonStyles.itemContainer}>
-      <Text style={commonStyles.itemText}>{item.name}</Text>
-      <View style={commonStyles.buttons}>
-        <TouchableOpacity
-          onPress={() => handleEdit(item)}
-          style={commonStyles.editButton}>
-          <Icon name="edit" size={20} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => handleDelete(item.id)}
-          style={commonStyles.deleteButton}>
-          <Icon name="delete" size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
-    <View style={commonStyles.container}>
-      <Text style={commonStyles.title}>Gastos</Text>
+    <KeyboardAvoidingView
+      style={{flex: 1}}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      {/* Ensure this container View takes up all available space */}
+      <View style={[commonStyles.container, {flex: 1}]}>
+        <Text style={commonStyles.title}>Gastos</Text>
 
-      <View style={commonStyles.inputContainer}>
-        <TextInput
-          placeholder="Nombre del gasto"
-          value={name}
-          onChangeText={setName}
-          style={commonStyles.input}
-          placeholderTextColor="black"
-        />
-        <Button
-          title={editingId ? 'Actualizar' : 'Agregar'}
-          onPress={handleSave}
-        />
+        <View style={commonStyles.inputContainer}>
+          <TextInput
+            placeholder="Nombre del gasto"
+            value={name}
+            onChangeText={setName}
+            style={commonStyles.input}
+            placeholderTextColor="black"
+          />
+          <Button
+            title={editingId ? 'Actualizar' : 'Agregar'}
+            onPress={handleSave}
+          />
+        </View>
+
+        {/* This ScrollView will now expand correctly within its flex parent */}
+        <ScrollView>
+          {expenses.map(item => (
+            <View key={item.id.toString()} style={commonStyles.itemContainer}>
+              <Text style={commonStyles.itemText}>{item.name}</Text>
+              <View style={commonStyles.buttons}>
+                <TouchableOpacity
+                  onPress={() => handleEdit(item)}
+                  style={commonStyles.editButton}>
+                  <Icon name="edit" size={20} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleDelete(item.id)}
+                  style={commonStyles.deleteButton}>
+                  <Icon name="delete" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+
+          {expenses.length === 0 && (
+            <Text style={commonStyles.emptyText}>
+              No hay gastos registrados.
+            </Text>
+          )}
+        </ScrollView>
       </View>
-
-      <FlatList
-        data={expenses}
-        keyExtractor={item => item.id.toString()}
-        renderItem={renderItem}
-        ListEmptyComponent={
-          <Text style={commonStyles.emptyText}>No hay gastos registrados.</Text>
-        }
-      />
-    </View>
+    </KeyboardAvoidingView>
   );
 }

@@ -1,11 +1,12 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   View,
   Text,
-  TextInput,
   Button,
   FlatList,
   TouchableOpacity,
+  Alert,
+  // You don't need ScrollView anymore for this layout
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -14,11 +15,14 @@ import {
   updateExpenseDetail,
   deleteExpenseDetail,
 } from './expenseDetailDatabase';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // o FontAwesome, Ionicons, etc.
+import {useFocusEffect} from '@react-navigation/native';
 
 import {commonStyles} from '../../../styles/commonStyles';
-import {ScrollView} from 'react-native-gesture-handler';
+// You might not need ScrollView from gesture-handler either
 import {formatDate} from '../../utils/utils';
+import {exportExcelAndShare} from '../../utils/xls';
+import ExpenseFormModal from './ExpenseFormModal';
+import ActionModal from './ActionModal';
 
 export default function ExpenseDetailReportScreen() {
   const [date, setDate] = useState(new Date());
@@ -27,16 +31,37 @@ export default function ExpenseDetailReportScreen() {
   const [expenseType, setExpenseType] = useState('');
   const [total, setTotal] = useState('');
   const [editingId, setEditingId] = useState(null);
-  const [filterStartDate, setFilterStartDate] = useState(new Date());
+  const [filterStartDate, setFilterStartDate] = useState(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  );
   const [filterEndDate, setFilterEndDate] = useState(new Date());
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [isActionModalVisible, setIsActionModalVisible] = useState(false);
+  const [isFormModalVisible, setIsFormModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  useEffect(() => {
-    loadExpenses();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      // Reinicia el formulario de entrada
+      resetForm();
+
+      // Reinicia los filtros de fecha al mes actual
+      const today = new Date();
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      setFilterStartDate(firstDayOfMonth);
+      setFilterEndDate(today);
+
+      // Carga los datos con los filtros reiniciados
+      const loadInitialData = async () => {
+        const data = await getExpensesDetail(firstDayOfMonth, today);
+        setExpenses(data);
+      };
+
+      loadInitialData();
+    }, []),
+  );
 
   const loadExpenses = async () => {
-    console.log("aa",filterStartDate, filterEndDate);
     const data = await getExpensesDetail(filterStartDate, filterEndDate);
     setExpenses(data);
   };
@@ -63,6 +88,7 @@ export default function ExpenseDetailReportScreen() {
 
     resetForm();
     await loadExpenses();
+    setIsFormModalVisible(false); // Close form modal on save
   };
 
   const handleEdit = item => {
@@ -71,16 +97,60 @@ export default function ExpenseDetailReportScreen() {
     setDescription(item.description);
     setExpenseType(item.expense_type);
     setTotal(item.total.toString());
+    setIsActionModalVisible(false); // Close action modal
+    setIsFormModalVisible(true); // Open form modal
   };
 
-  const handleDelete = async id => {
-    await deleteExpenseDetail(id);
-    await loadExpenses();
+  const handleAddNew = () => {
+    resetForm();
+    setIsFormModalVisible(true);
+  };
+
+  const handleRowPress = item => {
+    setSelectedItem(item);
+    setIsActionModalVisible(true);
+  };
+
+  const handleDelete = id => {
+    Alert.alert(
+      'Confirmar eliminación',
+      '¿Estás seguro de que quieres eliminar este registro?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Confirmar',
+          onPress: async () => {
+            await deleteExpenseDetail(id);
+            await loadExpenses();
+          },
+          style: 'destructive',
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
   const handleFilter = async () => {
     const all = await getExpensesDetail(filterStartDate, filterEndDate);
     setExpenses(all);
+  };
+
+  const handleDownloadExcel = async () => {
+    const expensesDetail = await getExpensesDetail(
+      filterStartDate,
+      filterEndDate,
+    );
+    exportExcelAndShare(
+      expensesDetail.map(e => ({
+        fecha: e.date,
+        tipo: e.expense_type,
+        descripcion: e.description,
+        total: e.total,
+      })),
+    );
   };
 
   const resetForm = () => {
@@ -98,17 +168,87 @@ export default function ExpenseDetailReportScreen() {
     dateDatePicker = filterEndDate;
   }
 
-  return (
-    <ScrollView contentContainerStyle={commonStyles.scrollContainer}>
-      {/* Form Area */}
-      <Text style={commonStyles.title}>Gestor de Gastos3</Text>
+  // This function will render ONLY the table header
+  const renderTableHeader = useCallback(
+    () => (
+      <View>
+        {/* List Header */}
+        <Text style={[commonStyles.title, {fontSize: 20, marginTop: 30}]}>
+          Lista de gastos
+        </Text>
 
-      <Text style={commonStyles.itemText}>Fecha:</Text>
-      <TouchableOpacity
-        style={commonStyles.input}
-        onPress={() => setShowDatePicker('date')}>
-        <Text style={commonStyles.dateText}>{formatDate(date)}</Text>
-      </TouchableOpacity>
+        <View style={commonStyles.tableHeader}>
+          <Text
+            style={[
+              commonStyles.tableCell,
+              commonStyles.headerCell,
+              {flex: 1.2},
+            ]}>
+            Fecha
+          </Text>
+          <Text
+            style={[
+              commonStyles.tableCell,
+              commonStyles.headerCell,
+              {flex: 2},
+            ]}>
+            Descripción
+          </Text>
+          <Text
+            style={[
+              commonStyles.tableCell,
+              commonStyles.headerCell,
+              {flex: 1.5},
+            ]}>
+            Tipo
+          </Text>
+          <Text
+            style={[
+              commonStyles.tableCell,
+              commonStyles.headerCell,
+              {flex: 1},
+            ]}>
+            Total
+          </Text>
+        </View>
+      </View>
+    ),
+    [], // No dependencies needed as it's static
+  );
+
+  // Agrupa los valores y los manejadores en objetos
+  const formValues = {
+    editingId,
+    date,
+    description,
+    expenseType,
+    total,
+  };
+
+  const formHandlers = {
+    setDescription,
+    setExpenseType,
+    setTotal,
+    onSave: handleSave,
+    setShowDatePicker,
+  };
+
+  return (
+    <View style={commonStyles.container}>
+      <ActionModal
+        visible={isActionModalVisible}
+        onClose={() => setIsActionModalVisible(false)}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        selectedItem={selectedItem}
+      />
+      <ExpenseFormModal
+        visible={isFormModalVisible}
+        onClose={() => setIsFormModalVisible(false)}
+        values={formValues}
+        handlers={formHandlers}
+      />
+
       {showDatePicker && (
         <DateTimePicker
           value={dateDatePicker}
@@ -131,100 +271,42 @@ export default function ExpenseDetailReportScreen() {
         />
       )}
 
-      <TextInput
-        style={commonStyles.input}
-        value={description}
-        onChangeText={setDescription}
-        placeholder="Descripción"
-        placeholderTextColor="#777"
-      />
+      <FlatList
+        // The contentContainerStyle from your ScrollView can be applied here
+        contentContainerStyle={commonStyles.scrollContainer}
+        data={expenses}
+        keyExtractor={item => item.id.toString()}
+        ListHeaderComponent={
+          <>
+            <Text style={[commonStyles.title, {fontSize: 20, marginTop: 10}]}>
+              Filtrar por fecha
+            </Text>
 
-      <TextInput
-        style={commonStyles.input}
-        value={expenseType}
-        onChangeText={setExpenseType}
-        placeholder="Tipo de gasto"
-        placeholderTextColor="#777"
-      />
+            <View style={commonStyles.dateRow}>
+              <Button
+                title={filterStartDate ? formatDate(filterStartDate) : 'Inicio'}
+                onPress={() => setShowDatePicker('start')}
+              />
+              <Button
+                title={filterEndDate ? formatDate(filterEndDate) : 'Fin'}
+                onPress={() => setShowDatePicker('end')}
+              />
+            </View>
 
-      <TextInput
-        style={commonStyles.input}
-        value={total}
-        onChangeText={setTotal}
-        placeholder="Total"
-        keyboardType="numeric"
-        placeholderTextColor="#777"
-      />
+            <Button title="Consultar" onPress={handleFilter} />
+            <View style={{marginVertical: 5}} />
+            <Button title="Agregar Gasto" onPress={handleAddNew} />
+            <View style={{marginVertical: 5}} />
+            <Button title="Descargar excel" onPress={handleDownloadExcel} />
 
-      <Button
-        title={editingId !== null ? 'Actualizar' : 'Guardar'}
-        onPress={handleSave}
-      />
-
-      <Text style={[commonStyles.title, {fontSize: 20, marginTop: 30}]}>
-        Filtrar por fecha
-      </Text>
-
-      <View style={commonStyles.dateRow}>
-        <Button
-          title={filterStartDate ? formatDate(filterStartDate) : 'Inicio'}
-          onPress={() => setShowDatePicker('start')}
-        />
-        <Button
-          title={filterEndDate ? formatDate(filterEndDate) : 'Fin'}
-          onPress={() => setShowDatePicker('end')}
-        />
-      </View>
-
-      <Button title="Consultar" onPress={handleFilter} />
-
-      {/* List of Expenses */}
-      <Text style={[commonStyles.title, {fontSize: 20, marginTop: 30}]}>
-        Lista de gastos
-      </Text>
-
-      <View style={commonStyles.tableHeader}>
-        <Text
-          style={[
-            commonStyles.tableCell,
-            commonStyles.headerCell,
-            {flex: 1.2},
-          ]}>
-          Fecha
-        </Text>
-        <Text
-          style={[commonStyles.tableCell, commonStyles.headerCell, {flex: 2}]}>
-          Descripción
-        </Text>
-        <Text
-          style={[
-            commonStyles.tableCell,
-            commonStyles.headerCell,
-            {flex: 1.5},
-          ]}>
-          Tipo
-        </Text>
-        <Text
-          style={[commonStyles.tableCell, commonStyles.headerCell, {flex: 1}]}>
-          Total
-        </Text>
-        <Text
-          style={[
-            commonStyles.tableCell,
-            commonStyles.headerCell,
-            {flex: 1.5},
-          ]}>
-          Acciones
-        </Text>
-      </View>
-
-      {expenses.length === 0 ? (
-        <Text style={commonStyles.emptyText}>No hay registros</Text>
-      ) : (
-        <FlatList
-          data={expenses}
-          keyExtractor={item => item.id.toString()}
-          renderItem={({item, index}) => (
+            {renderTableHeader()}
+          </>
+        }
+        ListEmptyComponent={
+          <Text style={commonStyles.emptyText}>No hay registros</Text>
+        }
+        renderItem={({item, index}) => (
+          <TouchableOpacity onPress={() => handleRowPress(item)}>
             <View
               style={[
                 commonStyles.tableRow,
@@ -242,27 +324,10 @@ export default function ExpenseDetailReportScreen() {
               <Text style={[commonStyles.tableCell, {flex: 1}]}>
                 ${item.total}
               </Text>
-              <View
-                style={[
-                  commonStyles.tableCell,
-                  {flex: 1.5, flexDirection: 'row'},
-                ]}>
-                <TouchableOpacity
-                  style={commonStyles.editButton}
-                  onPress={() => handleEdit(item)}>
-                  <Icon name="edit" size={20} color="#fff" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={commonStyles.deleteButton}
-                  onPress={() => handleDelete(item.id)}>
-                  <Icon name="delete" size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
             </View>
-          )}
-        />
-      )}
-    </ScrollView>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
   );
 }

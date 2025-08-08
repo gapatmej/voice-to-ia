@@ -1,4 +1,5 @@
 import { getExpenses } from "../configurations/expenses/expensesDatabase";
+import { TOGETHER_AI_API_KEY } from '@env';
 
 /**
  * Procesa un texto dado utilizando la API de Together AI y devuelve un JSON.
@@ -8,7 +9,7 @@ import { getExpenses } from "../configurations/expenses/expensesDatabase";
  * o null si hay un error o no se encuentra JSON.
  */
 export async function processTextWithTogetherAI(textToProcess) {
-  const apiKey = 'a5797b44da5f6008663acc44ebc93aaa37ed486a3af98982360e78a0ca89d958'; // ¡Considera manejar esto de forma más segura!
+  const apiKey = TOGETHER_AI_API_KEY;
 
   // Define el contenido del mensaje para la API
 
@@ -55,7 +56,7 @@ export async function processTextWithTogetherAI(textToProcess) {
       const jsonText = match[1].trim();
       try {
         const obj = JSON.parse(jsonText);
-        console.log(' JSON extracted:', obj);
+        console.log('✅ JSON extracted:', obj);
         return obj; // Retorna el objeto JSON parseado
       } catch (e) {
         console.error('❌ Error parsing JSON:', e.message);
