@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   Button,
-  FlatList,
   TouchableOpacity,
   Alert,
   KeyboardAvoidingView,

@@ -38,34 +38,49 @@ async function createExpenses(){
     await db.transaction(tx => {
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS ${TABLE_EXPENSES} (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-              date TEXT NOT NULL, -- formato sugerido: 'YYYY-MM-DD'
-              description TEXT NOT NULL,
-              expense_type TEXT NOT NULL,
-              total REAL NOT NULL
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT UNIQUE NOT NULL
         );`
       );
     });
     console.log("Tabla 'Expenses' creada correctamente.");
+    
+    // Agregar registros por defecto
+    await insertDefaultExpenses();
   } else {
     console.log("La tabla 'Expenses' ya existe.");
+  }
+}
+
+async function insertDefaultExpenses() {
+  const defaultExpenses = [
+    'Restaurantes',
+    'Ocio',
+    'Golosinas',
+    'Salud',
+    'Vestimenta',
+    'Educacion',
+    'Alimentacion diaria',
+  ];
+
+  try {
+    await db.transaction(tx => {
+      defaultExpenses.forEach(expense => {
+        tx.executeSql(
+          `INSERT OR IGNORE INTO ${TABLE_EXPENSES} (name) VALUES (?);`,
+          [expense]
+        );
+      });
+    });
+    console.log('Registros por defecto agregados a la tabla \'Expenses\'.');
+  } catch (error) {
+    console.error('Error al agregar registros por defecto:', error);
   }
 }
 
 async function createExpensesDetail(){
   // Verificar si la tabla existe antes de crearla
   const result = await db.executeSql(`SELECT name FROM sqlite_master WHERE type='table' AND name='${TABLE_EXPENSES_DETAIL}';`);
-
-
- /* await db.transaction(tx => {
-      tx.executeSql(
-        'DROP TABLE IF EXISTS TABLE_EXPENSES_DETAIL;',
-        [],
-        () => console.log('Tabla eliminada'),
-        (tx, error) => console.error('Error al eliminar la tabla', error)
-      );
-    });*/
-
 
   // Si no existe la tabla, entonces creamos la tabla
   if (result[0].rows.length === 0) {

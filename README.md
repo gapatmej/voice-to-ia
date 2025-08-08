@@ -83,6 +83,29 @@ If everything is set up correctly, you should see your new app running in the An
 
 This is one way to run your app — you can also build it directly from Android Studio or Xcode.
 
+## Step 3: Build APK (Android)
+
+To generate a production-ready APK that can be installed on any Android device without requiring Metro or development dependencies, follow these steps:
+
+### Generate Release APK
+
+From the root of your React Native project, run:
+
+```sh
+# Using React Native CLI
+npx gradle assembleRelease -p android
+
+# OR using Gradle directly
+cd android && ./gradlew assembleRelease
+```
+
+### Locate the APK
+
+After a successful build, you can find your APK at:
+
+```
+android/app/build/outputs/apk/release/app-release.apk
+```
 
 # Troubleshooting
 

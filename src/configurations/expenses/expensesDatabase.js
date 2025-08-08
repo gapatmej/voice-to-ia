@@ -16,6 +16,7 @@ export async function addExpense(name) {
     return { success: false, error };
   }
 }
+
 export async function getExpenses() {
   try {
     const results = await db.executeSql(`SELECT * FROM ${TABLE_EXPENSES};`);
