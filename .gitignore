@@ -35,11 +35,17 @@ local.properties
 !debug.keystore
 .kotlin/
 
+# Android build artifacts
+android/app/build/
+android/build/
+android/.gradle/
+
 # node.js
 #
 node_modules/
 npm-debug.log
 yarn-error.log
+package-lock.json
 
 # fastlane
 #
@@ -59,6 +65,12 @@ yarn-error.log
 # Ruby / CocoaPods
 **/Pods/
 /vendor/bundle/
+Gemfile.lock
+.bundle/
+
+# iOS build artifacts
+ios/build/
+ios/DerivedData/
 
 # Temporary files created by Metro to check the health of the file watcher
 .metro-health-check*
@@ -74,4 +86,40 @@ yarn-error.log
 !.yarn/sdks
 !.yarn/versions
 
+# Environment files
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+
+# React Native
+.expo/
+.expo-shared/
+
+# TypeScript
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettiercache
