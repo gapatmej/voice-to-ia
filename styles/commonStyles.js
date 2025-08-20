@@ -2,6 +2,9 @@
 import {StyleSheet} from 'react-native';
 
 export const commonStyles = StyleSheet.create({
+  marginTop10: {
+    marginTop: 10,
+  },
   container: {
     padding: 20, // Espacio interior del contenedor
     backgroundColor: '#F8F8F8', // Un color de fondo claro para el contenedor

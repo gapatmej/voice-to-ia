@@ -92,11 +92,9 @@ To generate a production-ready APK that can be installed on any Android device w
 From the root of your React Native project, run:
 
 ```sh
-# Using React Native CLI
-npx gradle assembleRelease -p android
 
-# OR using Gradle directly
-cd android && ./gradlew assembleRelease
+# using Gradle directly
+cd android && ./gradlew clean assembleRelease
 ```
 
 ### Locate the APK

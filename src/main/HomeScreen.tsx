@@ -14,12 +14,18 @@ import {formatDate} from '../utils/utils';
 
 export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
+  const [logs, setLogs] = useState({
+    voiceText: '',
+    aiResult: '',
+    error: '',
+  });
 
   const handleOnVoiceToText = async (text: any) => {
     setLoading(true);
+    setLogs({ voiceText: text, aiResult: '', error: '' });
     try {
       const jsonExpenseDetail = await processTextWithTogetherAI(text);
-
+      setLogs(prev => ({ ...prev, aiResult: JSON.stringify(jsonExpenseDetail, null, 2) }));
       if (jsonExpenseDetail) {
         await addExpenseDetail(
           formatDate(new Date()),
@@ -30,6 +36,7 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error('Error al procesar texto o guardar gasto:', error);
+      setLogs(prev => ({ ...prev, error: String(error) }));
       Alert.alert('Error', 'Ocurrió un error al procesar el texto o guardar el gasto.');
     } finally {
       setLoading(false);
@@ -40,6 +47,21 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Agrega un gasto</Text>
       <VoiceToText onVoiceToText={handleOnVoiceToText} />
+
+      {/* Logs visuales */}
+      <View style={styles.logBox}>
+        <Text style={styles.logTitle}>Logs</Text>
+        <Text style={styles.logLabel}>Texto de voz:</Text>
+        <Text style={styles.logText}>{logs.voiceText}</Text>
+        <Text style={styles.logLabel}>Resultado AI:</Text>
+        <Text style={styles.logText}>{logs.aiResult}</Text>
+        {logs.error ? (
+          <>
+            <Text style={styles.logLabel}>Error:</Text>
+            <Text style={[styles.logText, { color: 'red' }]}>{logs.error}</Text>
+          </>
+        ) : null}
+      </View>
 
       {loading && (
         <TouchableWithoutFeedback>
@@ -54,6 +76,30 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  logBox: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#f4f4f4',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  logTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#333',
+  },
+  logLabel: {
+    fontWeight: 'bold',
+    marginTop: 6,
+    color: '#555',
+  },
+  logText: {
+    fontSize: 14,
+    color: '#222',
+    marginBottom: 4,
+  },
   container: {
     flex: 1,
     padding: 20,

@@ -47,13 +47,12 @@ export default function ExpenseDetailReportScreen() {
 
       // Reinicia los filtros de fecha al mes actual
       const today = new Date();
-      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      setFilterStartDate(firstDayOfMonth);
+      setFilterStartDate(today);
       setFilterEndDate(today);
 
       // Carga los datos con los filtros reiniciados
       const loadInitialData = async () => {
-        const data = await getExpensesDetail(firstDayOfMonth, today);
+        const data = await getExpensesDetail(today, today);
         setExpenses(data);
       };
 
@@ -93,7 +92,13 @@ export default function ExpenseDetailReportScreen() {
 
   const handleEdit = item => {
     setEditingId(item.id);
-    setDate(new Date(item.date));
+    // Convertir 'YYYY-MM-DD' a Date local sin desfase
+    if (item.date) {
+      const [year, month, day] = item.date.split('-').map(Number);
+      setDate(new Date(year, month - 1, day));
+    } else {
+      setDate(new Date());
+    }
     setDescription(item.description);
     setExpenseType(item.expense_type);
     setTotal(item.total.toString());
@@ -312,21 +317,33 @@ export default function ExpenseDetailReportScreen() {
                 commonStyles.tableRow,
                 {backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff'},
               ]}>
-              <Text style={[commonStyles.tableCell, {flex: 1.2}]}>
+              <Text style={[commonStyles.tableCell, {flex: 1.2}]}> 
                 {item.date}
               </Text>
-              <Text style={[commonStyles.tableCell, {flex: 2}]}>
+              <Text style={[commonStyles.tableCell, {flex: 2}]}> 
                 {item.description}
               </Text>
-              <Text style={[commonStyles.tableCell, {flex: 1.5}]}>
+              <Text style={[commonStyles.tableCell, {flex: 1.5}]}> 
                 {item.expense_type}
               </Text>
-              <Text style={[commonStyles.tableCell, {flex: 1}]}>
-                ${item.total}
+              <Text style={[commonStyles.tableCell, {flex: 1}]}> 
+                ${parseFloat(item.total).toFixed(2)}
               </Text>
             </View>
           </TouchableOpacity>
         )}
+        ListFooterComponent={
+          expenses.length > 0 ? (
+            <View style={[commonStyles.tableRow, {backgroundColor: '#e6e6e6'}]}>
+              <Text style={[commonStyles.tableCell, {flex: 1.2}]}></Text>
+              <Text style={[commonStyles.tableCell, {flex: 2, fontWeight: 'bold'}]}>Totals</Text>
+              <Text style={[commonStyles.tableCell, {flex: 1.5}]}></Text>
+              <Text style={[commonStyles.tableCell, {flex: 1, fontWeight: 'bold'}]}>
+                ${expenses.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2)}
+              </Text>
+            </View>
+          ) : null
+        }
       />
     </View>
   );
