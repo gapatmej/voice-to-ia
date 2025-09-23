@@ -66,7 +66,7 @@ export default function ExpenseDetailReportScreen() {
   };
 
   const handleSave = async () => {
-    if (!description || !expenseType || !total) return;
+    if (!description || !expenseType || !total) {return;}
 
     if (editingId !== null) {
       await updateExpenseDetail(
@@ -101,7 +101,7 @@ export default function ExpenseDetailReportScreen() {
     }
     setDescription(item.description);
     setExpenseType(item.expense_type);
-    setTotal(item.total.toString());
+    setTotal(parseFloat(item.total).toFixed(2));
     setIsActionModalVisible(false); // Close action modal
     setIsFormModalVisible(true); // Open form modal
   };
@@ -161,7 +161,7 @@ export default function ExpenseDetailReportScreen() {
   const resetForm = () => {
     setDate(new Date());
     setDescription('');
-    setExpenseType('');
+    setExpenseType(null);
     setTotal('');
     setEditingId(null);
   };
@@ -173,6 +173,10 @@ export default function ExpenseDetailReportScreen() {
     dateDatePicker = filterEndDate;
   }
 
+  let totalAmount = expenses
+    .reduce((sum, item) => sum + parseFloat(item.total), 0)
+    .toFixed(2);
+
   // This function will render ONLY the table header
   const renderTableHeader = useCallback(
     () => (
@@ -181,6 +185,12 @@ export default function ExpenseDetailReportScreen() {
         <Text style={[commonStyles.title, {fontSize: 20, marginTop: 30}]}>
           Lista de gastos
         </Text>
+
+        <View style={commonStyles.tableRow}>
+          <Text style={[commonStyles.title, {fontSize: 20}]}>
+            Total: ${totalAmount}
+          </Text>
+        </View>
 
         <View style={commonStyles.tableHeader}>
           <Text
@@ -218,7 +228,7 @@ export default function ExpenseDetailReportScreen() {
         </View>
       </View>
     ),
-    [], // No dependencies needed as it's static
+    [totalAmount],
   );
 
   // Agrupa los valores y los manejadores en objetos
@@ -317,16 +327,16 @@ export default function ExpenseDetailReportScreen() {
                 commonStyles.tableRow,
                 {backgroundColor: index % 2 === 0 ? '#f9f9f9' : '#ffffff'},
               ]}>
-              <Text style={[commonStyles.tableCell, {flex: 1.2}]}> 
+              <Text style={[commonStyles.tableCell, {flex: 1.2}]}>
                 {item.date}
               </Text>
-              <Text style={[commonStyles.tableCell, {flex: 2}]}> 
+              <Text style={[commonStyles.tableCell, {flex: 2}]}>
                 {item.description}
               </Text>
-              <Text style={[commonStyles.tableCell, {flex: 1.5}]}> 
+              <Text style={[commonStyles.tableCell, {flex: 1.5}]}>
                 {item.expense_type}
               </Text>
-              <Text style={[commonStyles.tableCell, {flex: 1}]}> 
+              <Text style={[commonStyles.tableCell, {flex: 1}]}>
                 ${parseFloat(item.total).toFixed(2)}
               </Text>
             </View>
@@ -335,11 +345,18 @@ export default function ExpenseDetailReportScreen() {
         ListFooterComponent={
           expenses.length > 0 ? (
             <View style={[commonStyles.tableRow, {backgroundColor: '#e6e6e6'}]}>
-              <Text style={[commonStyles.tableCell, {flex: 1.2}]}></Text>
-              <Text style={[commonStyles.tableCell, {flex: 2, fontWeight: 'bold'}]}>Totals</Text>
-              <Text style={[commonStyles.tableCell, {flex: 1.5}]}></Text>
-              <Text style={[commonStyles.tableCell, {flex: 1, fontWeight: 'bold'}]}>
-                ${expenses.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2)}
+              <Text style={[commonStyles.tableCell, {flex: 1.2}]} />
+              <Text
+                style={[commonStyles.tableCell, {flex: 2, fontWeight: 'bold'}]}>
+                Total
+              </Text>
+              <Text style={[commonStyles.tableCell, {flex: 1.5}]} />
+              <Text
+                style={[commonStyles.tableCell, {flex: 1, fontWeight: 'bold'}]}>
+                $
+                {expenses
+                  .reduce((sum, item) => sum + parseFloat(item.total), 0)
+                  .toFixed(2)}
               </Text>
             </View>
           ) : null

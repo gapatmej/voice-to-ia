@@ -18,9 +18,12 @@ export async function processTextWithTogetherAI(textToProcess) {
 
   const content =
     'Crea un json del tipo {category,detail,amount} ' +
-    `Las categorias pueden ser: ${expenses} ` +
+    `Las categorias para el campo category deben ser: ${expenses} ` +
     'Si no estás seguro de los datos del json, mándalos como null. ' +
     'Si hay un valor del tipo 20 con 50, con significa separador de decimales ' +
+    'Siempre retorna un solo elemento no un array' +
+    'Si yo digo 2050, en realidad es 20.50 ' +
+    'El campo category solo debe tener una categoria del listado de categorias, tal cual sin agregar nada más' +
     `El texto que quiero que proceses es: ${textToProcess}`;
 
   console.log('Content to send:', content);

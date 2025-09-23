@@ -29,6 +29,14 @@ export const commonStyles = StyleSheet.create({
     fontSize: 16, // Asegura un tamaño de texto adecuado
     height: 50,
   },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 5,
+    backgroundColor: '#fff',
+    marginRight: 10,
+    justifyContent: 'center', // Centra el Picker verticalmente
+  },
   itemText: {
     fontSize: 20, // Aumentamos el tamaño de la fuente
     color: 'black', // Cambiado a color negro

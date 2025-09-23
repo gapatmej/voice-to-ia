@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Modal,
   View,
@@ -7,46 +7,35 @@ import {
   Button,
   TouchableOpacity,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-import { getExpenses } from '../../configurations/expenses/expensesDatabase';
+import {Picker} from '@react-native-picker/picker';
+import {getExpenses} from '../../configurations/expenses/expensesDatabase';
 import {commonStyles} from '../../../styles/commonStyles';
 import {formatDate} from '../../utils/utils';
 
-
-export default function ExpenseFormModal({
-  visible,
-  onClose,
-  values,
-  handlers,
-}) {
-  const { editingId, date, description, expenseType, total } = values;
-  const {
-    setDescription,
-    setExpenseType,
-    setTotal,
-    onSave,
-    setShowDatePicker,
-  } = handlers;
+export default function ExpenseFormModal({visible, onClose, values, handlers}) {
+  const {editingId, date, description, expenseType, total} = values;
+  const {setDescription, setExpenseType, setTotal, onSave, setShowDatePicker} =
+    handlers;
 
   const [expenseTypes, setExpenseTypes] = useState<string[]>([]);
 
   useEffect(() => {
     if (visible) {
-      // Si es nuevo gasto, reinicia el tipo de gasto a blanco
-      if (!editingId) {
-        setExpenseType('');
-      }
       getExpenses().then(items => {
         const types = items.map(item => item.name);
         setExpenseTypes(types);
-        // Si no hay tipo seleccionado y hay tipos disponibles, selecciona el primero
-        // Solo para edición, no para nuevo gasto
-        if (editingId && !expenseType && types.length > 0) {
-          setExpenseType(types[0]);
-        }
       });
     }
-  }, [visible, editingId]);
+  }, [visible]);
+
+  const handleTotalBlur = () => {
+    if (total) {
+      const parsedTotal = parseFloat(total);
+      if (!isNaN(parsedTotal)) {
+        setTotal(parsedTotal.toFixed(2));
+      }
+    }
+  };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -63,7 +52,7 @@ export default function ExpenseFormModal({
         </TouchableOpacity>
 
         <TextInput
-          style={[commonStyles.input, { height: 80, textAlignVertical: 'top' }]}
+          style={[commonStyles.input, {height: 80, textAlignVertical: 'top'}]}
           value={description}
           onChangeText={setDescription}
           placeholder="Descripción"
@@ -72,14 +61,18 @@ export default function ExpenseFormModal({
           numberOfLines={4}
         />
 
-        <View style={commonStyles.input}>
+        <View style={commonStyles.pickerContainer}>
           <Picker
             selectedValue={expenseType}
             onValueChange={setExpenseType}
-          >
-            <Picker.Item label="Selecciona tipo de gasto" value="" />
-            {expenseTypes.map((type, idx) => (
-              <Picker.Item key={idx} label={type} value={type} />
+            style={{color: 'black'}}>
+            <Picker.Item
+              label="Selecciona tipo de gasto"
+              value={null}
+              style={{color: 'grey'}}
+            />
+            {expenseTypes.map(type => (
+              <Picker.Item key={type} label={type} value={type} />
             ))}
           </Picker>
         </View>
@@ -88,6 +81,7 @@ export default function ExpenseFormModal({
           style={commonStyles.input}
           value={total}
           onChangeText={setTotal}
+          onBlur={handleTotalBlur}
           placeholder="Total"
           keyboardType="numeric"
           placeholderTextColor="#777"
@@ -97,7 +91,7 @@ export default function ExpenseFormModal({
           title={editingId !== null ? 'Actualizar' : 'Guardar'}
           onPress={onSave}
         />
-  <View style={commonStyles.marginTop10} />
+        <View style={commonStyles.marginTop10} />
         <Button title="Cancelar" color="grey" onPress={onClose} />
       </View>
     </Modal>
