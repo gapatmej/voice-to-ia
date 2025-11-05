@@ -1,4 +1,5 @@
 import {getDB} from '../../../databaseUtil/DatabaseContext';
+import {formatDate} from '../../utils/utils';
 
 export const TABLE_EXPENSES_DETAIL = 'ExpensesDetail';
 
@@ -18,15 +19,27 @@ export async function addExpenseDetail(date, description, expenseType, total) {
   }
 }
 
-export async function getExpensesDetail(fromDate, toDate) {
+export async function getExpensesDetail(fromDate, toDate, expenseType = null) {
   try {
-    fromDate = fromDate.toISOString().split('T')[0];
-    toDate = toDate.toISOString().split('T')[0];
+    fromDate = formatDate(fromDate) || '';
+    toDate = formatDate(toDate) || '';
 
-    const results = await db.executeSql(
-      `SELECT * FROM ${TABLE_EXPENSES_DETAIL} WHERE date BETWEEN ? AND ? ORDER BY date ASC;`,
-      [fromDate, toDate],
-    );
+    if (!fromDate || !toDate) {
+      console.error('Invalid dates provided to getExpensesDetail');
+      return [];
+    }
+
+    let query = `SELECT * FROM ${TABLE_EXPENSES_DETAIL} WHERE date BETWEEN ? AND ?`;
+    let params = [fromDate, toDate];
+
+    if (expenseType) {
+      query += ` AND expense_type = ?`;
+      params.push(expenseType);
+    }
+
+    query += ` ORDER BY date ASC;`;
+
+    const results = await db.executeSql(query, params);
 
  
     let expensesDetail = [];

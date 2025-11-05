@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   // You don't need ScrollView anymore for this layout
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import {Picker} from '@react-native-picker/picker';
 import {
   addExpenseDetail,
   getExpensesDetail,
@@ -16,6 +17,7 @@ import {
   deleteExpenseDetail,
 } from './expenseDetailDatabase';
 import {useFocusEffect} from '@react-navigation/native';
+import {getExpenses} from '../../configurations/expenses/expensesDatabase';
 
 import {commonStyles} from '../../../styles/commonStyles';
 // You might not need ScrollView from gesture-handler either
@@ -35,10 +37,21 @@ export default function ExpenseDetailReportScreen() {
     new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
   const [filterEndDate, setFilterEndDate] = useState(new Date());
+  const [filterExpenseType, setFilterExpenseType] = useState<string | null>(null);
+  const [expenseTypes, setExpenseTypes] = useState<string[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [isActionModalVisible, setIsActionModalVisible] = useState(false);
   const [isFormModalVisible, setIsFormModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const isClosingPicker = useRef(false);
+
+  useEffect(() => {
+    // Cargar tipos de gastos disponibles
+    getExpenses().then(items => {
+      const types = items.map(item => item.name);
+      setExpenseTypes(types);
+    });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -49,10 +62,11 @@ export default function ExpenseDetailReportScreen() {
       const today = new Date();
       setFilterStartDate(today);
       setFilterEndDate(today);
+      setFilterExpenseType(null);
 
       // Carga los datos con los filtros reiniciados
       const loadInitialData = async () => {
-        const data = await getExpensesDetail(today, today);
+        const data = await getExpensesDetail(today, today, null);
         setExpenses(data);
       };
 
@@ -61,7 +75,7 @@ export default function ExpenseDetailReportScreen() {
   );
 
   const loadExpenses = async () => {
-    const data = await getExpensesDetail(filterStartDate, filterEndDate);
+    const data = await getExpensesDetail(filterStartDate, filterEndDate, filterExpenseType ?? undefined as any);
     setExpenses(data);
   };
 
@@ -90,7 +104,7 @@ export default function ExpenseDetailReportScreen() {
     setIsFormModalVisible(false); // Close form modal on save
   };
 
-  const handleEdit = item => {
+  const handleEdit = (item: any) => {
     setEditingId(item.id);
     // Convertir 'YYYY-MM-DD' a Date local sin desfase
     if (item.date) {
@@ -111,12 +125,12 @@ export default function ExpenseDetailReportScreen() {
     setIsFormModalVisible(true);
   };
 
-  const handleRowPress = item => {
+  const handleRowPress = (item: any) => {
     setSelectedItem(item);
     setIsActionModalVisible(true);
   };
 
-  const handleDelete = id => {
+  const handleDelete = (id: any) => {
     Alert.alert(
       'Confirmar eliminación',
       '¿Estás seguro de que quieres eliminar este registro?',
@@ -139,7 +153,7 @@ export default function ExpenseDetailReportScreen() {
   };
 
   const handleFilter = async () => {
-    const all = await getExpensesDetail(filterStartDate, filterEndDate);
+    const all = await getExpensesDetail(filterStartDate, filterEndDate, filterExpenseType ?? undefined as any);
     setExpenses(all);
   };
 
@@ -147,6 +161,7 @@ export default function ExpenseDetailReportScreen() {
     const expensesDetail = await getExpensesDetail(
       filterStartDate,
       filterEndDate,
+      filterExpenseType ?? undefined as any,
     );
     exportExcelAndShare(
       expensesDetail.map(e => ({
@@ -161,7 +176,7 @@ export default function ExpenseDetailReportScreen() {
   const resetForm = () => {
     setDate(new Date());
     setDescription('');
-    setExpenseType(null);
+    setExpenseType('');
     setTotal('');
     setEditingId(null);
   };
@@ -264,31 +279,43 @@ export default function ExpenseDetailReportScreen() {
         handlers={formHandlers}
       />
 
-      {showDatePicker && (
+      {showDatePicker && !isClosingPicker.current && (
         <DateTimePicker
           value={dateDatePicker}
           mode="date"
           display="default"
-          onChange={(_, selectedDate) => {
-            if (selectedDate) {
-              if (showDatePicker === 'date') {
+          onChange={(event, selectedDate) => {
+            // Guardar el tipo de picker antes de cerrarlo
+            const pickerType = showDatePicker;
+            
+            // Marcar que estamos cerrando el picker para evitar re-abrirlo
+            isClosingPicker.current = true;
+            
+            // Cerrar el picker primero para evitar que se vuelva a abrir
+            setShowDatePicker('');
+            
+            // Solo actualizar si hay una fecha seleccionada y no fue cancelado
+            if (selectedDate && event.type !== 'dismissed') {
+              if (pickerType === 'date') {
                 setDate(selectedDate);
-              }
-              if (showDatePicker === 'start') {
+              } else if (pickerType === 'start') {
                 setFilterStartDate(selectedDate);
-              }
-              if (showDatePicker === 'end') {
+              } else if (pickerType === 'end') {
                 setFilterEndDate(selectedDate);
               }
             }
-            setShowDatePicker('');
+            
+            // Resetear el flag después de un pequeño delay
+            setTimeout(() => {
+              isClosingPicker.current = false;
+            }, 100);
           }}
         />
       )}
 
       <FlatList
         // The contentContainerStyle from your ScrollView can be applied here
-        contentContainerStyle={commonStyles.scrollContainer}
+        contentContainerStyle={{paddingBottom: 20}}
         data={expenses}
         keyExtractor={item => item.id.toString()}
         ListHeaderComponent={
@@ -297,15 +324,40 @@ export default function ExpenseDetailReportScreen() {
               Filtrar por fecha
             </Text>
 
-            <View style={commonStyles.dateRow}>
+            <View style={{flexDirection: 'row', gap: 10, marginVertical: 10}}>
               <Button
-                title={filterStartDate ? formatDate(filterStartDate) : 'Inicio'}
-                onPress={() => setShowDatePicker('start')}
+                title={filterStartDate ? (formatDate(filterStartDate) || 'Inicio') : 'Inicio'}
+                onPress={() => {
+                  isClosingPicker.current = false;
+                  setShowDatePicker('start');
+                }}
               />
               <Button
-                title={filterEndDate ? formatDate(filterEndDate) : 'Fin'}
-                onPress={() => setShowDatePicker('end')}
+                title={filterEndDate ? (formatDate(filterEndDate) || 'Fin') : 'Fin'}
+                onPress={() => {
+                  isClosingPicker.current = false;
+                  setShowDatePicker('end');
+                }}
               />
+            </View>
+
+            <Text style={[commonStyles.itemText, {marginTop: 10}]}>
+              Tipo de gasto:
+            </Text>
+            <View style={commonStyles.pickerContainer}>
+              <Picker
+                selectedValue={filterExpenseType}
+                onValueChange={setFilterExpenseType}
+                style={{color: 'black'}}>
+                <Picker.Item
+                  label="Todos los tipos"
+                  value={null}
+                  style={{color: 'grey'}}
+                />
+                {expenseTypes.map(type => (
+                  <Picker.Item key={type} label={type} value={type} />
+                ))}
+              </Picker>
             </View>
 
             <Button title="Consultar" onPress={handleFilter} />

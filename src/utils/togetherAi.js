@@ -20,7 +20,7 @@ export async function processTextWithTogetherAI(textToProcess) {
     'Crea un json del tipo {category,detail,amount} ' +
     `Las categorias para el campo category deben ser: ${expenses} ` +
     'Si no estás seguro de los datos del json, mándalos como null. ' +
-    'Si hay un valor del tipo 20 con 50, con significa separador de decimales ' +
+    'Si hay una cadena del tipo 20 con 50, con significa separador de decimales ' +
     'Siempre retorna un solo elemento no un array' +
     'Si yo digo 2050, en realidad es 20.50 ' +
     'El campo category solo debe tener una categoria del listado de categorias, tal cual sin agregar nada más' +
@@ -36,7 +36,7 @@ export async function processTextWithTogetherAI(textToProcess) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free',
+        model: 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
         messages: [
           {
             role: 'user',
