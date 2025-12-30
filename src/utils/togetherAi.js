@@ -1,4 +1,5 @@
 import { getExpenses } from "../configurations/expenses/expensesDatabase";
+import { getConfiguration, KEY_TOGETHER_AI_MODEL } from "../configurations/configurationsDatabase";
 import { TOGETHER_AI_API_KEY } from '@env';
 
 /**
@@ -15,6 +16,10 @@ export async function processTextWithTogetherAI(textToProcess) {
 
   const expensesCategories = await getExpenses();
   const expenses = expensesCategories.map(i => i.name).join(', ');
+
+  // Obtener el modelo de la base de datos
+  const model = await getConfiguration(KEY_TOGETHER_AI_MODEL) || 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B';
+  console.log('Using model:', model);
 
   const content =
     'Crea un json del tipo {category,detail,amount} ' +
@@ -36,7 +41,7 @@ export async function processTextWithTogetherAI(textToProcess) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
+        model: model,
         messages: [
           {
             role: 'user',

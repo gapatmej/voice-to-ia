@@ -14,6 +14,7 @@ import {createDrawerNavigator} from '@react-navigation/drawer';
 import HomeScreen from './src/main/HomeScreen';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import ExpenseDetailReportScreen from './src/main/ExpenseDetailReport/ExpenseDetailReportScreen';
+import ConfigurationScreen from './src/configurations/ConfigurationScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -36,6 +37,7 @@ function AppContent() {
         <Drawer.Screen name="Home" component={HomeScreen} />
         <Drawer.Screen name="Tipos de Gastos" component={ExpensesScreen} />
         <Drawer.Screen name="Reporte" component={ExpenseDetailReportScreen} />
+        <Drawer.Screen name="Configuraciones" component={ConfigurationScreen} />
       </Drawer.Navigator>
     </NavigationContainer>
   );

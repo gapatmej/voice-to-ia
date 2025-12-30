@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import SQLite from 'react-native-sqlite-storage';
 import { TABLE_EXPENSES } from '../src/configurations/expenses/expensesDatabase';
 import { TABLE_EXPENSES_DETAIL } from '../src/main/ExpenseDetailReport/expenseDetailDatabase';
+import { TABLE_CONFIGURATIONS, KEY_TOGETHER_AI_MODEL } from '../src/configurations/configurationsDatabase';
 
 SQLite.enablePromise(true);
 
@@ -24,6 +25,7 @@ export async function initDB() {
 
   await createExpenses();
   await createExpensesDetail();
+  await createConfigurations();
 
   console.log("Base de datos inicializada correctamente");
 }
@@ -98,6 +100,32 @@ async function createExpensesDetail(){
     console.log("Tabla 'Expenses Detail' creada correctamente.");
   } else {
     console.log("La tabla 'Expenses Detail' ya existe.");
+  }
+}
+
+async function createConfigurations() {
+  const result = await db.executeSql(`SELECT name FROM sqlite_master WHERE type='table' AND name='${TABLE_CONFIGURATIONS}';`);
+
+  if (result[0].rows.length === 0) {
+    await db.transaction(tx => {
+      tx.executeSql(
+        `CREATE TABLE IF NOT EXISTS ${TABLE_CONFIGURATIONS} (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT
+        );`
+      );
+    });
+    console.log("Tabla 'Configurations' creada correctamente.");
+    
+    // Insert default model
+    await db.transaction(tx => {
+      tx.executeSql(
+        `INSERT OR IGNORE INTO ${TABLE_CONFIGURATIONS} (key, value) VALUES (?, ?);`,
+        [KEY_TOGETHER_AI_MODEL, 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B']
+      );
+    });
+  } else {
+    console.log("La tabla 'Configurations' ya existe.");
   }
 }
 
