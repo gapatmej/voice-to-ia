@@ -68,7 +68,7 @@ export default function ExpenseFormModal({visible, onClose, values, handlers}) {
             style={{color: 'black'}}>
             <Picker.Item
               label="Selecciona tipo de gasto"
-              value={null}
+              value=""
               style={{color: 'grey'}}
             />
             {expenseTypes.map(type => (

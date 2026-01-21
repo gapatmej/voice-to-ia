@@ -45,7 +45,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Agrega un gasto</Text>
+      <Text style={styles.title}>Agrega un gasto4</Text>
       <VoiceToText onVoiceToText={handleOnVoiceToText} />
 
       {/* Logs visuales */}

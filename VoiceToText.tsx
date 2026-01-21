@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {View, Button, PermissionsAndroid, Platform} from 'react-native';
+import {View, Button, PermissionsAndroid, Platform, Text} from 'react-native';
 import Voice from '@react-native-voice/voice';
 
 const requestMicrophonePermission = async () => {
@@ -26,22 +26,45 @@ type VoiceToTextProps = {
 const VoiceToText = ({onVoiceToText}: VoiceToTextProps) => {
   const [isRecognizing, setIsRecognizing] = useState(false);
   const [error, setError] = useState('');
+  const [partialResults, setPartialResults] = useState('');
 
   useEffect(() => {
     Voice.onSpeechStart = () => {
       setIsRecognizing(true);
+      if (Platform.OS === 'ios') {
+        setPartialResults('');
+      }
     };
 
     Voice.onSpeechEnd = () => {
-      setIsRecognizing(false);
+      // No detener automáticamente el reconocimiento en iOS
+      // El usuario debe presionar el botón "Detener" manualmente
+      if (Platform.OS === 'android') {
+        setIsRecognizing(false);
+      }
+    };
+
+    // Capturar resultados parciales mientras hablas
+    Voice.onSpeechPartialResults = e => {
+      if (e.value && e.value.length > 0) {
+        setPartialResults(e.value[0]);
+      }
     };
 
     Voice.onSpeechResults = e => {
-      onVoiceToText(e.value[0]);
-      setIsRecognizing(false);
+      if (e.value && e.value.length > 0) {
+        // En Android, procesar resultados finales
+        if (Platform.OS === 'android') {
+          onVoiceToText(e.value[0]);
+          setIsRecognizing(false);
+        }
+        // En iOS con modo continuo, actualizar resultados parciales
+        // El usuario debe presionar "Detener" para finalizar
+      }
     };
 
     Voice.onSpeechError = e => {
+      console.error('Speech error:', e);
       setError(e.error);
       setIsRecognizing(false);
     };
@@ -50,7 +73,7 @@ const VoiceToText = ({onVoiceToText}: VoiceToTextProps) => {
     return () => {
       Voice.destroy().then(Voice.removeAllListeners);
     };
-  }, []);
+  }, [onVoiceToText]);
 
   const startRecognizing = async () => {
     const hasPermission = await requestMicrophonePermission();
@@ -60,7 +83,18 @@ const VoiceToText = ({onVoiceToText}: VoiceToTextProps) => {
     }
 
     try {
-      await Voice.start('es-ES');
+      setError('');
+      if (Platform.OS === 'ios') {
+        setPartialResults('');
+      }
+      // Opciones para mejorar el reconocimiento continuo
+      const options = {
+        // Para iOS - no detener automáticamente
+        continuous: true,
+        // Esperar más tiempo antes de considerar que terminó de hablar
+        interimResults: true,
+      };
+      await Voice.start('es-ES', options);
     } catch (e) {
       console.error(e);
       setError(e.message);
@@ -69,18 +103,32 @@ const VoiceToText = ({onVoiceToText}: VoiceToTextProps) => {
 
   const stopRecognizing = async () => {
     try {
-      await Voice.stop(); // Detener el reconocimiento
+      await Voice.stop();
+      // Procesar el texto capturado hasta ahora
+      if (partialResults) {
+        onVoiceToText(partialResults);
+        setPartialResults('');
+      }
+      // Restablecer el estado
+      setIsRecognizing(false);
     } catch (e) {
       console.error(e);
+      setIsRecognizing(false);
     }
   };
 
   return (
     <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+      {Platform.OS === 'ios' && partialResults ? (
+        <Text style={{marginBottom: 10, color: '#666', fontStyle: 'italic', paddingHorizontal: 20, textAlign: 'center'}}>
+          "{partialResults}"
+        </Text>
+      ) : null}
       <Button
         title={isRecognizing ? 'Detener' : 'Agregar gasto'}
         onPress={isRecognizing ? stopRecognizing : startRecognizing}
       />
+      {error ? <Text style={{color: 'red', marginTop: 10}}>{error}</Text> : null}
     </View>
   );
 };

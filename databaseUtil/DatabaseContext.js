@@ -121,7 +121,7 @@ async function createConfigurations() {
     await db.transaction(tx => {
       tx.executeSql(
         `INSERT OR IGNORE INTO ${TABLE_CONFIGURATIONS} (key, value) VALUES (?, ?);`,
-        [KEY_TOGETHER_AI_MODEL, 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B']
+        [KEY_TOGETHER_AI_MODEL, 'deepseek-ai/DeepSeek-V3.1']
       );
     });
   } else {
